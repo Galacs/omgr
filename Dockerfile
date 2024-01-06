@@ -22,11 +22,11 @@ RUN cargo build --release -p cron --bin cron
 RUN cargo build --release -p web --bin web
 
 
-FROM debian:bookworm-slim AS rbxlk
+FROM debian:bookworm-slim AS omgr
 WORKDIR app
 RUN apt-get update && apt-get install -y libssl-dev ca-certificates
-COPY --from=builder /app/target/release/rbxlk /usr/local/bin
-ENTRYPOINT ["/usr/local/bin/rbxlk"]
+COPY --from=builder /app/target/release/omgr /usr/local/bin
+ENTRYPOINT ["/usr/local/bin/omgr"]
 
 FROM debian:bookworm-slim AS cron
 WORKDIR app
