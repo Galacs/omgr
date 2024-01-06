@@ -87,21 +87,6 @@ pub async fn event_handler(
                     return Ok(());
                 };
                 if custom_id.starts_with("withdraw-init") {
-                    let reply = {
-                        let components = vec![serenity::CreateActionRow::Buttons(vec![
-                            serenity::CreateButton::new(format!("withdraw-cancel-{}", website_id))
-                                .label("Cancel withdraw")
-                                .style(poise::serenity_prelude::ButtonStyle::Secondary),
-                            serenity::CreateButton::new(format!("withdraw-finish-{}", website_id))
-                                .label("Finish withdraw")
-                                .style(poise::serenity_prelude::ButtonStyle::Success),                    
-                        ])];
-                
-                        poise::CreateReply::default()
-                            .content(format!("Instructions: website {}", website_id))
-                            .components(components)
-                            .ephemeral(true)
-                    };
                     if let Some(row) = sqlx::query!("SELECT website_id FROM withdraw WHERE discord_id=$1", discord_id).fetch_optional(conn).await? {
                         let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
                             .content(format!("You already have an ongoing withdraw process on website {}", row.website_id));
@@ -123,6 +108,23 @@ pub async fn event_handler(
                         // Update out-of-date withdraw embed
                         let reply = get_deposit_edit_message(conn).await?;
                         interaction.message.clone().edit(&ctx.http, reply).await?;
+                    };
+                    let reply = {
+                        let components = vec![serenity::CreateActionRow::Buttons(vec![
+                            serenity::CreateButton::new(format!("withdraw-cancel-{}", website_id))
+                                .label("Cancel withdraw")
+                                .style(poise::serenity_prelude::ButtonStyle::Secondary),
+                            serenity::CreateButton::new(format!("withdraw-finish-{}", website_id))
+                                .label("Finish withdraw")
+                                .style(poise::serenity_prelude::ButtonStyle::Success),                    
+                        ])];
+                
+                        let tax = sqlx::query!("SELECT rate from tax WHERE tax='withdraw'").fetch_one(conn).await?.rate;
+                        let r#final = (amount as f32 * (1.0-tax/100.0)).floor();
+                        poise::CreateReply::default()
+                            .content(format!("Instructions: website {}. Withdraw costs {} and {} will be given at a tax of {}%", website_id, amount, r#final, tax))
+                            .components(components)
+                            .ephemeral(true)
                     };
                     let mut data = serenity::CreateInteractionResponseMessage::new();
                     data = reply.to_slash_initial_response(data);
