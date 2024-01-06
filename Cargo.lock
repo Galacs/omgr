@@ -2829,6 +2829,8 @@ dependencies = [
  "actix-web",
  "anyhow",
  "dotenv",
+ "omgr",
+ "poise",
  "serde",
  "sqlx",
  "tokio",

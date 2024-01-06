@@ -10,5 +10,7 @@ sqlx = { workspace = true }
 tokio = { workspace = true }
 dotenv = { workspace = true }
 anyhow = { workspace = true }
+poise = { workspace = true }
+omgr = { path = "../../" }
 actix-web = "4"
 serde = "1"
