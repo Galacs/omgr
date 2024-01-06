@@ -20,8 +20,12 @@ pub async fn create_deposit_embed(
 
 pub async fn create_deposit_embed_message(conn: &Pool<Postgres>) -> Result<poise::CreateReply, Error> {
     let rows = sqlx::query!("SELECT DISTINCT website_id FROM deposit").fetch_all(conn).await?;
+    let rows_withdraw = sqlx::query!("SELECT DISTINCT website_id FROM withdraw").fetch_all(conn).await?;
     let get_disabled = |website_id: &str| {
         rows.iter().any(|r| r.website_id == website_id)
+    };
+    let get_disabled_withdraw = |website_id: &str| {
+        rows_withdraw.iter().any(|r| r.website_id == website_id)
     };
     let get_style = |website_id: &str| {
         if get_disabled(website_id) {
@@ -31,7 +35,7 @@ pub async fn create_deposit_embed_message(conn: &Pool<Postgres>) -> Result<poise
         }
     };
     let get_style_withdraw = |website_id: &str| {
-        if get_disabled(website_id) {
+        if get_disabled_withdraw(website_id) {
             poise::serenity_prelude::ButtonStyle::Secondary
         } else {
             poise::serenity_prelude::ButtonStyle::Danger
