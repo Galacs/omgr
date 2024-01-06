@@ -1,0 +1,60 @@
+services:
+  omgr:
+    build:
+      context: .
+      target: omgr
+    restart: always
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgres://omgr:mypassword@postgres/omgr
+
+  cron:
+    build:
+      context: .
+      target: cron
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      - DATABASE_URL=postgres://omgr:mypassword@postgres/omgr
+    
+  web:
+    build:
+      context: .
+      target: web
+    restart: always
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgres://omgr:mypassword@postgres/omgr
+    ports:
+      - '8080:8080'
+
+  postgres:
+    image: postgres
+    restart: always
+    volumes:
+      - postgres_storage:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: omgr
+      POSTGRES_USER: omgr
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - '5432:5432'
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: root@root.pam
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "5050:80"
+
+volumes:
+  postgres_storage: {}

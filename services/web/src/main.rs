@@ -2,13 +2,14 @@ use actix_web::{web, App, HttpServer, Responder, get, HttpResponse, post};
 use sqlx::{Pool, Postgres, PgPool};
 use serde::{Serialize, Deserialize};
 
-use poise::serenity_prelude::{self as serenity, EditMessage};
+use poise::serenity_prelude::{self as serenity, EditMessage, CreateMessage};
 
 pub struct Data(Pool<Postgres>, std::sync::Arc<serenity::Http>);
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Deposit {
     discord_id: i64,
+    amount: i64,
     website_id: String,
 }
 
@@ -20,7 +21,7 @@ async fn get_deposits(data: web::Data<Data>) -> impl Responder {
         return HttpResponse::InternalServerError().body("DB error")
     };
 
-    let deposits: Vec<_> = rows.iter().map(|r| Deposit { discord_id: r.discord_id, website_id: r.website_id.clone() }).collect();
+    let deposits: Vec<_> = rows.iter().map(|r| Deposit { discord_id: r.discord_id, amount: 0, website_id: r.website_id.clone() }).collect();
 
     HttpResponse::Ok().json(deposits)
 }
@@ -73,6 +74,9 @@ async fn post_deposits(data: web::Data<Data>, deposits: web::Json<Vec<Deposit>>)
         };
         if query.rows_affected() < 1 {
             return HttpResponse::InternalServerError().body(format!("The deposit process: {}, website {} doesn't exist or isn't in check state", deposit.discord_id, deposit.website_id))
+        }
+        if let Ok(user) = serenity::UserId::new(deposit.discord_id as u64).to_user(http).await {
+            let _ = user.direct_message(http, CreateMessage::default().content(format!("Your deposit to website {} for an amount of {} was confirmed", deposit.website_id, deposit.amount))).await;
         }
     }
     if let Ok(Some(embed_id)) = sqlx::query!("SELECT message_id,channel_id FROM embed").fetch_optional(conn).await {
