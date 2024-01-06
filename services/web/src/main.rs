@@ -54,13 +54,13 @@ pub async fn create_deposit_embed_message(conn: &Pool<Postgres>) -> Result<poise
     ])];
 
     Ok(poise::CreateReply::default()
-            .content("Click the button below to open the modal")
+            .content("Deposit process explanation")
             .components(components))
 }
 
 pub async fn get_deposit_edit_message(conn: &Pool<Postgres>) -> Result<EditMessage, anyhow::Error> {
     let builder = create_deposit_embed_message(conn).await?;
-    Ok(EditMessage::default().content("Click the button below to open the modal").components(builder.components.unwrap()))
+    Ok(EditMessage::default().content("Deposit process explanation").components(builder.components.unwrap()))
 }
 
 #[post("/deposits")]
