@@ -1,6 +1,7 @@
 services:
   omgr:
-    image: docker.ait-younes.fr/omgr/omgr
+    # image: docker.ait-younes.fr/omgr/omgr
+    image: galacs/omgr_omgr
     build:
       context: .
       target: omgr
@@ -13,7 +14,8 @@ services:
       - DATABASE_URL=postgres://omgr:mypassword@postgres/omgr
 
   cron:
-    image: docker.ait-younes.fr/omgr/cron
+    # image: docker.ait-younes.fr/omgr/cron
+    image: galacs/omgr_cron
     build:
       context: .
       target: cron
@@ -24,7 +26,8 @@ services:
       - DATABASE_URL=postgres://omgr:mypassword@postgres/omgr
     
   web:
-    image: docker.ait-younes.fr/omgr/web
+    # image: docker.ait-younes.fr/omgr/web
+    image: galacs/omgr_web
     build:
       context: .
       target: web
