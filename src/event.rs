@@ -82,6 +82,79 @@ pub async fn event_handler(
                         interaction.create_response(&ctx.http, builder).await?;
                     }
                 }
+            } else if custom_id.starts_with("withdraw") {
+                let Some(website_id) = &interaction.data.custom_id.split('-').nth(2) else {
+                    return Ok(());
+                };
+                if custom_id.starts_with("withdraw-init") {
+                    let reply = {
+                        let components = vec![serenity::CreateActionRow::Buttons(vec![
+                            serenity::CreateButton::new(format!("withdraw-cancel-{}", website_id))
+                                .label("Cancel withdraw")
+                                .style(poise::serenity_prelude::ButtonStyle::Secondary),
+                            serenity::CreateButton::new(format!("withdraw-finish-{}", website_id))
+                                .label("Finish withdraw")
+                                .style(poise::serenity_prelude::ButtonStyle::Success),                    
+                        ])];
+                
+                        poise::CreateReply::default()
+                            .content(format!("Instructions: website {}", website_id))
+                            .components(components)
+                            .ephemeral(true)
+                    };
+                    if let Some(row) = sqlx::query!("SELECT website_id FROM withdraw WHERE discord_id=$1", discord_id).fetch_optional(conn).await? {
+                        let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
+                            .content(format!("You already have an ongoing withdraw process on website {}", row.website_id));
+                        let builder = serenity::CreateInteractionResponse::Message(data);
+                        interaction.create_response(&ctx.http, builder).await?;
+                    }
+                    // Modal
+                    let modal = serenity::CreateQuickModal::new("Withdraw Process")
+                        .timeout(std::time::Duration::from_secs(600))
+                        .short_field("Amount");
+                    let response = interaction.quick_modal(ctx, modal).await?.unwrap();
+                    let amount: i32 = response.inputs[0].parse()?;
+
+                    if sqlx::query!("INSERT INTO withdraw(website_id, discord_id, interaction_token, amount) VALUES ($1,$2,$3,$4)", website_id, discord_id, &interaction.token, amount).execute(conn).await.is_err() {
+                        let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
+                            .content(format!("A withdraw process is already going on website {}", website_id));
+                        let builder = serenity::CreateInteractionResponse::Message(data);
+                        interaction.create_response(&ctx.http, builder).await?;
+                        // Update out-of-date withdraw embed
+                        let reply = get_deposit_edit_message(conn).await?;
+                        interaction.message.clone().edit(&ctx.http, reply).await?;
+                    };
+                    let mut data = serenity::CreateInteractionResponseMessage::new();
+                    data = reply.to_slash_initial_response(data);
+                    let builder = serenity::CreateInteractionResponse::Message(data);
+                    response.interaction.create_response(&ctx.http, builder).await?;
+                } else if custom_id.starts_with("withdraw-cancel") {
+                    let Some(_) = sqlx::query!("SELECT website_id FROM withdraw WHERE discord_id=$1", discord_id).fetch_optional(conn).await? else {
+                        let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
+                            .content("You have no ongoing withdraw process");
+                        let builder = serenity::CreateInteractionResponse::Message(data);
+                        interaction.create_response(&ctx.http, builder).await?;
+                        return Ok(())
+                    };
+                    sqlx::query!("DELETE FROM withdraw WHERE discord_id=$1 AND website_id=$2", discord_id, website_id).execute(conn).await?;
+                    let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
+                        .content(format!("Your withdraw process on website {} was cancelled", website_id));
+                    let builder = serenity::CreateInteractionResponse::Message(data);
+                    interaction.create_response(&ctx.http, builder).await?;
+                    // dbg!(interaction.message);
+                } else if custom_id.starts_with("withdraw-finish") {
+                    if sqlx::query!("UPDATE withdraw SET is_check=TRUE WHERE discord_id=$1 AND website_id=$2 ", discord_id, website_id).execute(conn).await?.rows_affected() == 1 {
+                        let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
+                        .content(format!("Your withdraw on website {} was just marked as finished", website_id));
+                    let builder = serenity::CreateInteractionResponse::Message(data);
+                    interaction.create_response(&ctx.http, builder).await?;
+                    } else {
+                        let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
+                            .content("You have no ongoing withdraw process");
+                        let builder = serenity::CreateInteractionResponse::Message(data);
+                        interaction.create_response(&ctx.http, builder).await?;
+                    }
+                }
             }
         }
         _ => {}
