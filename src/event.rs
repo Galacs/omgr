@@ -42,7 +42,7 @@ pub async fn event_handler(
                         let builder = serenity::CreateInteractionResponse::Message(data);
                         interaction.create_response(&ctx.http, builder).await?;
                     }
-                    sqlx::query!("INSERT INTO deposit(website_id, discord_id) VALUES ($1,$2)", website_id, discord_id).execute(conn).await?;
+                    sqlx::query!("INSERT INTO deposit(website_id, discord_id, interaction_token) VALUES ($1,$2,$3)", website_id, discord_id, &interaction.token).execute(conn).await?;
         
                     let mut data = serenity::CreateInteractionResponseMessage::new();
                     data = reply.to_slash_initial_response(data);
@@ -61,6 +61,7 @@ pub async fn event_handler(
                         .content(format!("Your deposit process on website {} was cancelled", website_id));
                     let builder = serenity::CreateInteractionResponse::Message(data);
                     interaction.create_response(&ctx.http, builder).await?;
+                    // dbg!(interaction.message);
                 } else if custom_id.starts_with("deposit-finish") {
                     dbg!("bababoey");
                     if sqlx::query!("UPDATE deposit SET is_check=TRUE WHERE discord_id=$1 AND website_id=$2 ", discord_id, website_id).execute(conn).await?.rows_affected() == 1 {
