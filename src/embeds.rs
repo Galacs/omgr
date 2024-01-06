@@ -30,6 +30,13 @@ pub async fn create_deposit_embed_message(conn: &Pool<Postgres>) -> Result<poise
             poise::serenity_prelude::ButtonStyle::Primary
         }
     };
+    let get_style_withdraw = |website_id: &str| {
+        if get_disabled(website_id) {
+            poise::serenity_prelude::ButtonStyle::Secondary
+        } else {
+            poise::serenity_prelude::ButtonStyle::Danger
+        }
+    };
     let components = vec![serenity::CreateActionRow::Buttons(vec![
         serenity::CreateButton::new("deposit-init-1")
             .label("Website 1")
@@ -51,6 +58,28 @@ pub async fn create_deposit_embed_message(conn: &Pool<Postgres>) -> Result<poise
             .label("Website 5")
             .disabled(get_disabled("5"))
             .style(get_style("5")),
+    ]),
+    serenity::CreateActionRow::Buttons(vec![
+        serenity::CreateButton::new("withdraw-init-1")
+            .label("Website 1")
+            .disabled(get_disabled("1"))
+            .style(get_style_withdraw("1")),
+        serenity::CreateButton::new("withdraw-init-2")
+            .label("Website 2")
+            .disabled(get_disabled("2"))
+            .style(get_style_withdraw("2")),
+        serenity::CreateButton::new("withdraw-init-3")
+            .label("Website 3")
+            .disabled(get_disabled("3"))
+            .style(get_style_withdraw("3")),
+        serenity::CreateButton::new("withdraw-init-4")
+            .label("Website 4")
+            .disabled(get_disabled("4"))
+            .style(get_style_withdraw("4")),
+        serenity::CreateButton::new("withdraw-init-5")
+            .label("Website 5")
+            .disabled(get_disabled("5"))
+            .style(get_style_withdraw("5")),
     ])];
 
     Ok(poise::CreateReply::default()
