@@ -43,7 +43,7 @@ async fn main() -> Result<(), Error> {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![ping(), embeds::create_deposit_embed()],
+            commands: vec![ping(), embeds::create_deposit_embed(), embeds::update_deposit_embed()],
             event_handler: |ctx, event, framework, data| {
                 Box::pin(event::event_handler(ctx, event, framework, data))
             },

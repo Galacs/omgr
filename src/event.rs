@@ -1,6 +1,6 @@
 use poise::serenity_prelude::{self as serenity, FullEvent};
 
-use crate::{Data, Error};
+use crate::{Data, Error, embeds::get_deposit_edit_message};
 
 pub async fn event_handler(
     ctx: &serenity::Context,
@@ -42,8 +42,15 @@ pub async fn event_handler(
                         let builder = serenity::CreateInteractionResponse::Message(data);
                         interaction.create_response(&ctx.http, builder).await?;
                     }
-                    sqlx::query!("INSERT INTO deposit(website_id, discord_id, interaction_token) VALUES ($1,$2,$3)", website_id, discord_id, &interaction.token).execute(conn).await?;
-        
+                    if sqlx::query!("INSERT INTO deposit(website_id, discord_id, interaction_token) VALUES ($1,$2,$3)", website_id, discord_id, &interaction.token).execute(conn).await.is_err() {
+                        let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
+                            .content(format!("A deposit process is already going on website {}", website_id));
+                        let builder = serenity::CreateInteractionResponse::Message(data);
+                        interaction.create_response(&ctx.http, builder).await?;
+                        // Update out-of-date deposit embed
+                        let reply = get_deposit_edit_message(conn).await?;
+                        interaction.message.clone().edit(&ctx.http, reply).await?;
+                    };
                     let mut data = serenity::CreateInteractionResponseMessage::new();
                     data = reply.to_slash_initial_response(data);
                     let builder = serenity::CreateInteractionResponse::Message(data);
