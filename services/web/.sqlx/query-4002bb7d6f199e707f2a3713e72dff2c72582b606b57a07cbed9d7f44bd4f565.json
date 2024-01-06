@@ -1,0 +1,32 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT discord_id,website_id,amount FROM withdraw WHERE is_check=TRUE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "discord_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "website_id",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "amount",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "4002bb7d6f199e707f2a3713e72dff2c72582b606b57a07cbed9d7f44bd4f565"
+}

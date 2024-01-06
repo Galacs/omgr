@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO embed(message_id,channel_id,server_id) VALUES ($1,$2,$3) ON CONFLICT(server_id) DO UPDATE SET message_id=$1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fae7d00c458780d0e28c1c19ca8077f7f96a274109ebcd4498ad19fb891ee5ac"
+}

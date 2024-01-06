@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE withdraw SET is_check=TRUE WHERE discord_id=$1 AND website_id=$2 ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ce5565ee8dca8b2d6199f4ac03775045df99ecfb32d84bf0fd6e64a03e7f2845"
+}

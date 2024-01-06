@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM withdraw WHERE discord_id=$1 AND website_id=$2 AND is_check=TRUE",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e32e40ea14a2f0a4a8797c9d342411abea49de00824b6cbd93977e73537a04f1"
+}

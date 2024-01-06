@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO withdraw(website_id, discord_id, interaction_token, amount) VALUES ($1,$2,$3,$4)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Int8",
+        "Varchar",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5f66cd7ec9bc891860f46e5d47fa003a05a4030834bc4c523f5f1c3c3c0c329f"
+}

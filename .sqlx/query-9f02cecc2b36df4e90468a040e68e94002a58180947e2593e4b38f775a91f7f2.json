@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE deposit SET is_check=TRUE WHERE discord_id=$1 AND website_id=$2 ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9f02cecc2b36df4e90468a040e68e94002a58180947e2593e4b38f775a91f7f2"
+}

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM deposit WHERE discord_id=$1 AND website_id=$2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a278755a71cc75691b4ac5ec2b0f5a2558c4c7a57d03dba832e51987c43af01f"
+}
