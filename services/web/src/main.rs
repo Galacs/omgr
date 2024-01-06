@@ -52,6 +52,14 @@ pub async fn create_deposit_embed_message(conn: &Pool<Postgres>) -> Result<poise
             .label("Website 3")
             .disabled(get_disabled("3"))
             .style(get_style("3")),
+        serenity::CreateButton::new("deposit-init-4")
+            .label("Website 4")
+            .disabled(get_disabled("4"))
+            .style(get_style("4")),
+        serenity::CreateButton::new("deposit-init-5")
+            .label("Website 5")
+            .disabled(get_disabled("5"))
+            .style(get_style("5")),
     ])];
 
     Ok(poise::CreateReply::default()
