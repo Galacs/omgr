@@ -9,7 +9,7 @@ pub struct Data(Pool<Postgres>, std::sync::Arc<serenity::Http>);
 #[derive(Serialize, Deserialize, Debug)]
 struct Deposit {
     discord_id: i64,
-    amount: i64,
+    amount: i32,
     website_id: String,
 }
 
@@ -25,6 +25,20 @@ async fn get_deposits(data: web::Data<Data>) -> impl Responder {
 
     HttpResponse::Ok().json(deposits)
 }
+
+#[get("/withdraws")]
+async fn get_withdraws(data: web::Data<Data>) -> impl Responder {
+    let conn = &data.as_ref().0;
+    // Get deposit processe with a check status
+    let Ok(rows) = sqlx::query!("SELECT discord_id,website_id,amount FROM withdraw WHERE is_check=TRUE").fetch_all(conn).await else {
+        return HttpResponse::InternalServerError().body("DB error")
+    };
+
+    let deposits: Vec<_> = rows.iter().map(|r| Deposit { discord_id: r.discord_id, amount: r.amount, website_id: r.website_id.clone() }).collect();
+
+    HttpResponse::Ok().json(deposits)
+}
+
 
 // Temporary
 pub async fn create_deposit_embed_message(conn: &Pool<Postgres>) -> Result<poise::CreateReply, anyhow::Error> {
@@ -132,6 +146,33 @@ async fn post_deposits(data: web::Data<Data>, deposits: web::Json<Vec<Deposit>>)
     HttpResponse::Ok().body(format!("{} deposits were marked as complete", deposits.0.len()))
 }
 
+#[post("/withdraws")]
+async fn post_withdraws(data: web::Data<Data>, deposits: web::Json<Vec<Deposit>>) -> impl Responder {
+    let conn = &data.as_ref().0;
+    let http = &data.as_ref().1;
+    for deposit in &deposits.0 {
+        let Ok(query) = sqlx::query!("DELETE FROM withdraw WHERE discord_id=$1 AND website_id=$2 AND is_check=TRUE", deposit.discord_id, deposit.website_id).execute(conn).await else {
+            return HttpResponse::InternalServerError().body("DB error")
+        };
+        if query.rows_affected() < 1 {
+            return HttpResponse::InternalServerError().body(format!("The withdraw process: {}, website {} doesn't exist or isn't in check state", deposit.discord_id, deposit.website_id))
+        }
+        if let Ok(user) = serenity::UserId::new(deposit.discord_id as u64).to_user(http).await {
+            let _ = user.direct_message(http, CreateMessage::default().content(format!("Your withdraw to website {} for an amount of {} was confirmed", deposit.website_id, deposit.amount))).await;
+        }
+    }
+    if let Ok(Some(embed_id)) = sqlx::query!("SELECT message_id,channel_id FROM embed").fetch_optional(conn).await {
+        let message_id = serenity::MessageId::new(embed_id.message_id as u64);
+        let channel_id = serenity::ChannelId::new(embed_id.channel_id as u64);
+        if let Ok(mut msg) = http.get_message(channel_id, message_id).await {
+            if let Ok(builder) = get_deposit_edit_message(conn).await {
+                let _ = msg.edit(http, builder).await;
+            }
+        }
+    };
+    HttpResponse::Ok().body(format!("{} withdraws were marked as complete", deposits.0.len()))
+}
+
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
     // DB
@@ -144,7 +185,7 @@ async fn main() -> anyhow::Result<()> {
     let client = serenity::Client::builder(std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN"), serenity::GatewayIntents::non_privileged()).application_id(app_id).await.expect("Err creating client");
 
     HttpServer::new(move || {
-        App::new().service(get_deposits).service(post_deposits).app_data(web::Data::new(Data(conn.clone(), client.http.clone())))
+        App::new().service(get_deposits).service(get_withdraws).service(post_deposits).service(post_withdraws).app_data(web::Data::new(Data(conn.clone(), client.http.clone())))
     })
         .bind(("0.0.0.0", 8080))?
         .run()
