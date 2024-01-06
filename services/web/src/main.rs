@@ -181,7 +181,7 @@ async fn main() -> anyhow::Result<()> {
     sqlx::migrate!("../../migrations").run(&conn).await?;
 
     // Discord api clint
-    let app_id = serenity::ApplicationId::new(std::env::var("DICSORD_APP_ID").expect("missing DICSORD_APP_ID").parse()?);
+    let app_id = serenity::ApplicationId::new(std::env::var("DISCORD_APP_ID").expect("missing DISCORD_APP_ID").parse()?);
     let client = serenity::Client::builder(std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN"), serenity::GatewayIntents::non_privileged()).application_id(app_id).await.expect("Err creating client");
 
     HttpServer::new(move || {
