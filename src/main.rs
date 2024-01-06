@@ -47,7 +47,7 @@ async fn main() -> Result<(), Error> {
         if let Ok(str) = env_var {
             UserId::new(str.parse().unwrap_or_default())
         } else {
-            UserId::new(0)           
+            UserId::default()
         }
     };
     let mut owners = std::collections::HashSet::<serenity::UserId>::new();
