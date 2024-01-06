@@ -63,7 +63,6 @@ pub async fn event_handler(
                     interaction.create_response(&ctx.http, builder).await?;
                     // dbg!(interaction.message);
                 } else if custom_id.starts_with("deposit-finish") {
-                    dbg!("bababoey");
                     if sqlx::query!("UPDATE deposit SET is_check=TRUE WHERE discord_id=$1 AND website_id=$2 ", discord_id, website_id).execute(conn).await?.rows_affected() == 1 {
                         let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
                         .content(format!("Your deposit on website {} was just marked as finished", website_id));
