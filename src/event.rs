@@ -136,7 +136,7 @@ pub async fn event_handler(
                     let builder = serenity::CreateInteractionResponse::Message(data);
                     response.interaction.create_response(&ctx.http, builder).await?;
                     // Log to discord channel
-                    dslog::send_log_to_discord(&ctx.http, conn, interaction.guild_id.ok_or("in pm")?, &format!("{} initiated a withdraw on website {}", interaction.user, website_id)).await?;
+                    dslog::send_log_to_discord(&ctx.http, conn, interaction.guild_id.ok_or("in pm")?, &format!("{} initiated a withdraw on website {} for an ammount of {}", interaction.user, website_id, amount)).await?;
                     // Update out-of-date withdraw embed
                     let reply = get_deposit_edit_message(conn).await?;
                     interaction.message.clone().edit(&ctx.http, reply).await?;

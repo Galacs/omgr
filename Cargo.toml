@@ -15,6 +15,7 @@ dotenv = "0.15.0"
 anyhow = "1.0"
 poise = "0.6.1-rc1"
 async-trait = "0.1.75"
+dslog = { path = "libs/dslog"}
 
 [dependencies]
 sqlx = { workspace = true }
@@ -23,3 +24,4 @@ dotenv = { workspace = true }
 poise = { workspace = true }
 rand = "0.8.5"
 async-trait = { workspace = true }
+dslog = { workspace = true }
