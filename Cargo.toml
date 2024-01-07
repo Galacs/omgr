@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace]
-members = [ "services/*" ]
+members = [ "services/*", "libs/*" ]
 
 [workspace.dependencies]
 sqlx = { version = "0.7", features = [ "runtime-tokio", "postgres", "migrate", "macros", "bigdecimal", "time" ] }
@@ -14,6 +14,7 @@ tokio = { version = "1.33.0", features = ["rt-multi-thread", "full"] }
 dotenv = "0.15.0"
 anyhow = "1.0"
 poise = "0.6.1-rc1"
+async-trait = "0.1.75"
 
 [dependencies]
 sqlx = { workspace = true }
@@ -21,4 +22,4 @@ tokio = { workspace = true }
 dotenv = { workspace = true }
 poise = { workspace = true }
 rand = "0.8.5"
-async-trait = "0.1.75"
+async-trait = { workspace = true }
