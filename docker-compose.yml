@@ -22,6 +22,8 @@ services:
     restart: always
     depends_on:
       - postgres
+    env_file:
+      - .env
     environment:
       - DATABASE_URL=postgres://omgr:mypassword@postgres/omgr
     
