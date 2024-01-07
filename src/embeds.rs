@@ -1,7 +1,22 @@
+use std::sync::Arc;
+
 use poise::serenity_prelude::{self as serenity, GuildId, EditMessage};
 use sqlx::{Postgres, Pool};
 
 use crate::{Context, Error};
+
+pub async fn update_latest_embed(conn: &Pool<Postgres>, http: &Arc<serenity::Http>) -> Result<(), Error> {
+    let Some(embed_id) = sqlx::query!("SELECT message_id,channel_id FROM embed").fetch_optional(conn).await? else {
+        return Ok(())
+    };
+    let message_id = serenity::MessageId::new(embed_id.message_id as u64);
+    let channel_id = serenity::ChannelId::new(embed_id.channel_id as u64);
+    let mut msg = http.get_message(channel_id, message_id).await?;
+    let builder = get_deposit_edit_message(conn).await?;
+    let _ = msg.edit(http, builder).await;
+        
+    Ok(())
+}
 
 /// Creates the deposit embed
 #[poise::command(slash_command, prefix_command, owners_only, hide_in_help)]
@@ -66,23 +81,23 @@ pub async fn create_deposit_embed_message(conn: &Pool<Postgres>) -> Result<poise
     serenity::CreateActionRow::Buttons(vec![
         serenity::CreateButton::new("withdraw-init-1")
             .label("Website 1")
-            .disabled(get_disabled("1"))
+            .disabled(get_disabled_withdraw("1"))
             .style(get_style_withdraw("1")),
         serenity::CreateButton::new("withdraw-init-2")
             .label("Website 2")
-            .disabled(get_disabled("2"))
+            .disabled(get_disabled_withdraw("2"))
             .style(get_style_withdraw("2")),
         serenity::CreateButton::new("withdraw-init-3")
             .label("Website 3")
-            .disabled(get_disabled("3"))
+            .disabled(get_disabled_withdraw("3"))
             .style(get_style_withdraw("3")),
         serenity::CreateButton::new("withdraw-init-4")
             .label("Website 4")
-            .disabled(get_disabled("4"))
+            .disabled(get_disabled_withdraw("4"))
             .style(get_style_withdraw("4")),
         serenity::CreateButton::new("withdraw-init-5")
             .label("Website 5")
-            .disabled(get_disabled("5"))
+            .disabled(get_disabled_withdraw("5"))
             .style(get_style_withdraw("5")),
     ])];
 

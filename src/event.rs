@@ -1,6 +1,6 @@
 use poise::serenity_prelude::{self as serenity, FullEvent};
 
-use crate::{Data, Error, embeds::get_deposit_edit_message};
+use crate::{Data, Error, embeds::{get_deposit_edit_message, update_latest_embed}};
 
 pub async fn event_handler(
     ctx: &serenity::Context,
@@ -47,14 +47,14 @@ pub async fn event_handler(
                             .content(format!("A deposit process is already going on website {}", website_id));
                         let builder = serenity::CreateInteractionResponse::Message(data);
                         interaction.create_response(&ctx.http, builder).await?;
-                        // Update out-of-date deposit embed
-                        let reply = get_deposit_edit_message(conn).await?;
-                        interaction.message.clone().edit(&ctx.http, reply).await?;
                     };
                     let mut data = serenity::CreateInteractionResponseMessage::new();
                     data = reply.to_slash_initial_response(data);
                     let builder = serenity::CreateInteractionResponse::Message(data);
                     interaction.create_response(&ctx.http, builder).await?;
+                    // Update out-of-date deposit embed
+                    let reply = get_deposit_edit_message(conn).await?;
+                    interaction.message.clone().edit(&ctx.http, reply).await?;
                 } else if custom_id.starts_with("deposit-cancel") {
                     let Some(_) = sqlx::query!("SELECT website_id FROM deposit WHERE discord_id=$1", discord_id).fetch_optional(conn).await? else {
                         let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
@@ -69,6 +69,8 @@ pub async fn event_handler(
                     let builder = serenity::CreateInteractionResponse::Message(data);
                     interaction.create_response(&ctx.http, builder).await?;
                     // dbg!(interaction.message);
+                    // Update out-of-date withdraw embed
+                    update_latest_embed(conn, &ctx.http).await?;
                 } else if custom_id.starts_with("deposit-finish") {
                     if sqlx::query!("UPDATE deposit SET is_check=TRUE WHERE discord_id=$1 AND website_id=$2 ", discord_id, website_id).execute(conn).await?.rows_affected() == 1 {
                         let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
@@ -105,9 +107,6 @@ pub async fn event_handler(
                             .content(format!("A withdraw process is already going on website {}", website_id));
                         let builder = serenity::CreateInteractionResponse::Message(data);
                         interaction.create_response(&ctx.http, builder).await?;
-                        // Update out-of-date withdraw embed
-                        let reply = get_deposit_edit_message(conn).await?;
-                        interaction.message.clone().edit(&ctx.http, reply).await?;
                     };
                     let reply = {
                         let components = vec![serenity::CreateActionRow::Buttons(vec![
@@ -130,6 +129,9 @@ pub async fn event_handler(
                     data = reply.to_slash_initial_response(data);
                     let builder = serenity::CreateInteractionResponse::Message(data);
                     response.interaction.create_response(&ctx.http, builder).await?;
+                    // Update out-of-date withdraw embed
+                    let reply = get_deposit_edit_message(conn).await?;
+                    interaction.message.clone().edit(&ctx.http, reply).await?;
                 } else if custom_id.starts_with("withdraw-cancel") {
                     let Some(_) = sqlx::query!("SELECT website_id FROM withdraw WHERE discord_id=$1", discord_id).fetch_optional(conn).await? else {
                         let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
@@ -144,6 +146,8 @@ pub async fn event_handler(
                     let builder = serenity::CreateInteractionResponse::Message(data);
                     interaction.create_response(&ctx.http, builder).await?;
                     // dbg!(interaction.message);
+                    // Update out-of-date withdraw embed
+                    update_latest_embed(conn, &ctx.http).await?;
                 } else if custom_id.starts_with("withdraw-finish") {
                     if sqlx::query!("UPDATE withdraw SET is_check=TRUE WHERE discord_id=$1 AND website_id=$2 ", discord_id, website_id).execute(conn).await?.rows_affected() == 1 {
                         let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
