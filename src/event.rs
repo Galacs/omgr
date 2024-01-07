@@ -52,6 +52,8 @@ pub async fn event_handler(
                     data = reply.to_slash_initial_response(data);
                     let builder = serenity::CreateInteractionResponse::Message(data);
                     interaction.create_response(&ctx.http, builder).await?;
+                    // Log to discord channel
+                    dslog::send_log_to_discord(&ctx.http, conn, interaction.guild_id.ok_or("in pm")?, &format!("{} initiated a deposit on website {}", interaction.user, website_id)).await?;
                     // Update out-of-date deposit embed
                     let reply = get_deposit_edit_message(conn).await?;
                     interaction.message.clone().edit(&ctx.http, reply).await?;
@@ -68,7 +70,9 @@ pub async fn event_handler(
                         .content(format!("Your deposit process on website {} was cancelled", website_id));
                     let builder = serenity::CreateInteractionResponse::Message(data);
                     interaction.create_response(&ctx.http, builder).await?;
-                    // dbg!(interaction.message);
+                    // dbg!(interaction.message)
+                    // Log to discord channel
+                    dslog::send_log_to_discord(&ctx.http, conn, interaction.guild_id.ok_or("in pm")?, &format!("{} cancelled a deposit on website {}", interaction.user, website_id)).await?;
                     // Update out-of-date withdraw embed
                     update_latest_embed(conn, &ctx.http).await?;
                 } else if custom_id.starts_with("deposit-finish") {
@@ -83,6 +87,8 @@ pub async fn event_handler(
                         let builder = serenity::CreateInteractionResponse::Message(data);
                         interaction.create_response(&ctx.http, builder).await?;
                     }
+                    // Log to discord channel
+                    dslog::send_log_to_discord(&ctx.http, conn, interaction.guild_id.ok_or("in pm")?, &format!("{} finished a deposit on website {}", interaction.user, website_id)).await?;
                 }
             } else if custom_id.starts_with("withdraw") {
                 let Some(website_id) = &interaction.data.custom_id.split('-').nth(2) else {
@@ -129,6 +135,8 @@ pub async fn event_handler(
                     data = reply.to_slash_initial_response(data);
                     let builder = serenity::CreateInteractionResponse::Message(data);
                     response.interaction.create_response(&ctx.http, builder).await?;
+                    // Log to discord channel
+                    dslog::send_log_to_discord(&ctx.http, conn, interaction.guild_id.ok_or("in pm")?, &format!("{} initiated a withdraw on website {}", interaction.user, website_id)).await?;
                     // Update out-of-date withdraw embed
                     let reply = get_deposit_edit_message(conn).await?;
                     interaction.message.clone().edit(&ctx.http, reply).await?;
@@ -146,6 +154,8 @@ pub async fn event_handler(
                     let builder = serenity::CreateInteractionResponse::Message(data);
                     interaction.create_response(&ctx.http, builder).await?;
                     // dbg!(interaction.message);
+                    // Log to discord channel
+                    dslog::send_log_to_discord(&ctx.http, conn, interaction.guild_id.ok_or("in pm")?, &format!("{} cancelled a withdraw on website {}", interaction.user, website_id)).await?;
                     // Update out-of-date withdraw embed
                     update_latest_embed(conn, &ctx.http).await?;
                 } else if custom_id.starts_with("withdraw-finish") {
@@ -160,6 +170,8 @@ pub async fn event_handler(
                         let builder = serenity::CreateInteractionResponse::Message(data);
                         interaction.create_response(&ctx.http, builder).await?;
                     }
+                    // Log to discord channel
+                    dslog::send_log_to_discord(&ctx.http, conn, interaction.guild_id.ok_or("in pm")?, &format!("{} finished a withdraw on website {}", interaction.user, website_id)).await?;
                 }
             }
         }
