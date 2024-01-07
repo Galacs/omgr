@@ -32,6 +32,20 @@ async fn set_tax(
     Ok(())
 }
 
+/// Sets the guild's log channel
+#[poise::command(slash_command, prefix_command, owners_only, hide_in_help)]
+async fn set_log(
+    ctx: Context<'_>,
+    #[description = "Log channel id"] channel: serenity::Channel,
+) -> Result<(), Error> {
+    let conn = &ctx.data().0;
+    let guild_id: i64 = ctx.guild_id().ok_or("in pm")?.into();
+    let channel_id: i64 = channel.id().into();
+    sqlx::query!("INSERT INTO log(guild_id,channel_id) VALUES ($1,$2) ON CONFLICT(guild_id) DO UPDATE SET channel_id=$2", guild_id, channel_id).execute(conn).await?;
+    ctx.say(format!("The log channel is now {}", channel)).await?;
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     // Loads dotenv file
@@ -55,7 +69,7 @@ async fn main() -> Result<(), Error> {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![ping(), set_tax(), embeds::create_deposit_embed(), embeds::update_deposit_embed()],
+            commands: vec![ping(), set_tax(), set_log(), embeds::create_deposit_embed(), embeds::update_deposit_embed()],
             event_handler: |ctx, event, framework, data| {
                 Box::pin(event::event_handler(ctx, event, framework, data))
             },

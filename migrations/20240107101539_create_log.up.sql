@@ -1,0 +1,4 @@
+CREATE TABLE log (
+    guild_id BIGINT NOT NULL UNIQUE,
+    channel_id BIGINT NOT NULL UNIQUE
+);
