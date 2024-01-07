@@ -17,11 +17,20 @@ async fn main() -> anyhow::Result<()> {
     let client = serenity::Client::builder(std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN"), serenity::GatewayIntents::non_privileged()).application_id(app_id).await.expect("Err creating client");
 
     // Cleans deposit table of process older than the 5 minutes timeout
-    let rows = sqlx::query!("SELECT website_id, interaction_token FROM deposit WHERE start_date < CURRENT_TIMESTAMP - INTERVAL '5 minutes'").fetch_all(&conn).await?;
-    let query = sqlx::query!("DELETE FROM deposit WHERE start_date < CURRENT_TIMESTAMP - INTERVAL '5 minutes'").execute(&conn).await?;
+    let rows = sqlx::query!("SELECT website_id, interaction_token FROM deposit WHERE start_date < CURRENT_TIMESTAMP - INTERVAL '5 minutes' AND is_check=false").fetch_all(&conn).await?;
+    let query = sqlx::query!("DELETE FROM deposit WHERE start_date < CURRENT_TIMESTAMP - INTERVAL '5 minutes' AND is_check=false").execute(&conn).await?;
     for r in rows.iter() {
         let data = serenity::CreateInteractionResponseFollowup::new().ephemeral(true)
-            .content(format!("You deposit process on website {} was cancelled after 5 minutes", r.website_id));
+            .content(format!("Your deposit process on website {} was cancelled after 5 minutes", r.website_id));
+        client.http.create_followup_message(&r.interaction_token, &data, vec![]).await?;
+    }
+
+    // Cleans withdraw table of process older than the 5 minutes timeout
+    let rows = sqlx::query!("SELECT website_id, interaction_token FROM withdraw WHERE start_date < CURRENT_TIMESTAMP - INTERVAL '5 minutes' AND is_check=false").fetch_all(&conn).await?;
+    let query = sqlx::query!("DELETE FROM withdraw WHERE start_date < CURRENT_TIMESTAMP - INTERVAL '5 minutes' AND is_check=false").execute(&conn).await?;
+    for r in rows.iter() {
+        let data = serenity::CreateInteractionResponseFollowup::new().ephemeral(true)
+            .content(format!("Your withdraw process on website {} was cancelled after 5 minutes", r.website_id));
         client.http.create_followup_message(&r.interaction_token, &data, vec![]).await?;
     }
 
