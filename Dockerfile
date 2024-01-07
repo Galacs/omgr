@@ -30,9 +30,10 @@ FROM debian:bookworm-slim AS cron
 WORKDIR app
 RUN apt-get update && apt-get install -y libssl-dev ca-certificates cron
 COPY --from=builder /app/app/target/release/cron /usr/local/bin
-RUN crontab -l | { cat; echo "*/5 * * * * /usr/local/bin/cron"; } | crontab -
-ENTRYPOINT ["/usr/sbin/cron"]
-CMD ["-f", "-l", "2", "-L", "/dev/stdout"]
+ENTRYPOINT ["/usr/local/bin/cron"]
+# RUN crontab -l | { cat; echo "*/5 * * * * /usr/local/bin/cron"; } | crontab -
+# ENTRYPOINT ["/usr/sbin/cron"]
+# CMD ["-f", "-L", "/dev/stdout"]
 
 FROM debian:bookworm-slim AS web
 WORKDIR app
