@@ -175,6 +175,9 @@ async fn post_withdraws(data: web::Data<Data>, deposits: web::Json<Vec<Deposit>>
 
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
+    // Loads dotenv file
+    let _ = dotenv::dotenv();
+    
     // DB
     let database_url = std::env::var("DATABASE_URL").expect("Expected a database url in the environment");
     let conn = PgPool::connect(&database_url).await?;
