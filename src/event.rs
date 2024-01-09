@@ -55,8 +55,8 @@ pub async fn event_handler(
                     // Log to discord channel
                     dslog::send_log_to_discord(&ctx.http, conn, interaction.guild_id.ok_or("in pm")?, &format!("{} initiated a deposit on website {}", interaction.user, website_id)).await?;
                     // Update out-of-date deposit embed
-                    let reply = get_deposit_edit_message(conn).await?;
-                    interaction.message.clone().edit(&ctx.http, reply).await?;
+                    // let reply = get_deposit_edit_message(conn).await?;
+                    // interaction.message.clone().edit(&ctx.http, reply).await?;
                 } else if custom_id.starts_with("deposit-cancel") {
                     let Some(_) = sqlx::query!("SELECT website_id FROM deposit WHERE discord_id=$1", discord_id).fetch_optional(conn).await? else {
                         let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
@@ -138,8 +138,8 @@ pub async fn event_handler(
                     // Log to discord channel
                     dslog::send_log_to_discord(&ctx.http, conn, interaction.guild_id.ok_or("in pm")?, &format!("{} initiated a withdraw on website {} for an ammount of {}", interaction.user, website_id, amount)).await?;
                     // Update out-of-date withdraw embed
-                    let reply = get_deposit_edit_message(conn).await?;
-                    interaction.message.clone().edit(&ctx.http, reply).await?;
+                    // let reply = get_deposit_edit_message(conn).await?;
+                    // interaction.message.clone().edit(&ctx.http, reply).await?;
                 } else if custom_id.starts_with("withdraw-cancel") {
                     let Some(_) = sqlx::query!("SELECT website_id FROM withdraw WHERE discord_id=$1", discord_id).fetch_optional(conn).await? else {
                         let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
