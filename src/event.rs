@@ -108,7 +108,10 @@ pub async fn event_handler(
                     let response = interaction.quick_modal(ctx, modal).await?.unwrap();
                     let amount: i32 = response.inputs[0].parse()?;
 
-                    if sqlx::query!("INSERT INTO withdraw(website_id, discord_id, interaction_token, amount) VALUES ($1,$2,$3,$4)", website_id, discord_id, &interaction.token, amount).execute(conn).await.is_err() {
+                    let tax = sqlx::query!("SELECT rate from tax WHERE tax='withdraw' AND website_id=$1", website_id).fetch_one(conn).await?.rate;
+                    let r#final = (amount as f32 * (1.0-tax/100.0)).floor() as i32;
+
+                    if sqlx::query!("INSERT INTO withdraw(website_id, discord_id, interaction_token, amount) VALUES ($1,$2,$3,$4)", website_id, discord_id, &interaction.token, r#final).execute(conn).await.is_err() {
                         let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
                             .content(format!("A withdraw process is already going on website {}", website_id));
                         let builder = serenity::CreateInteractionResponse::Message(data);
@@ -124,8 +127,6 @@ pub async fn event_handler(
                                 .style(poise::serenity_prelude::ButtonStyle::Success),                    
                         ])];
                 
-                        let tax = sqlx::query!("SELECT rate from tax WHERE tax='withdraw' AND website_id=$1", website_id).fetch_one(conn).await?.rate;
-                        let r#final = (amount as f32 * (1.0-tax/100.0)).floor();
                         poise::CreateReply::default()
                             .content(format!("Instructions: website {}. Withdraw costs {} and {} will be given at a tax of {}%", website_id, amount, r#final, tax))
                             .components(components)
