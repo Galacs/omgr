@@ -129,7 +129,7 @@ pub async fn event_handler(
                 
                         poise::CreateReply::default()
                             .content(format!("Instructions: website {}. Withdraw costs {} and {} will be given at a tax of {}%", website_id, amount, r#final, tax))
-                            .components(components)
+                            // .components(components)
                             .ephemeral(true)
                     };
                     let mut data = serenity::CreateInteractionResponseMessage::new();
@@ -141,6 +141,21 @@ pub async fn event_handler(
                     // Update out-of-date withdraw embed
                     // let reply = get_deposit_edit_message(conn).await?;
                     // interaction.message.clone().edit(&ctx.http, reply).await?;
+
+                    // Quick route to finish pasted
+                    if sqlx::query!("UPDATE withdraw SET is_check=TRUE WHERE discord_id=$1 AND website_id=$2 ", discord_id, website_id).execute(conn).await?.rows_affected() == 1 {
+                        let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
+                        .content(format!("Your withdraw on website {} was just marked as finished", website_id));
+                    let builder = serenity::CreateInteractionResponse::Message(data);
+                    interaction.create_response(&ctx.http, builder).await?;
+                    } else {
+                        let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
+                            .content("You have no ongoing withdraw process");
+                        let builder = serenity::CreateInteractionResponse::Message(data);
+                        interaction.create_response(&ctx.http, builder).await?;
+                    }
+                    // Log to discord channel
+                    dslog::send_log_to_discord(&ctx.http, conn, interaction.guild_id.ok_or("in pm")?, &format!("{} finished a withdraw on website {}", interaction.user, website_id)).await?;
                 } else if custom_id.starts_with("withdraw-cancel") {
                     let Some(_) = sqlx::query!("SELECT website_id FROM withdraw WHERE discord_id=$1", discord_id).fetch_optional(conn).await? else {
                         let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
