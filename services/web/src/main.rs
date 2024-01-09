@@ -134,15 +134,15 @@ async fn post_deposits(data: web::Data<Data>, deposits: web::Json<Vec<Deposit>>)
             let _ = user.direct_message(http, CreateMessage::default().content(format!("Your deposit to website {} for an amount of {} was confirmed", deposit.website_id, deposit.amount))).await;
         }
     }
-    if let Ok(Some(embed_id)) = sqlx::query!("SELECT message_id,channel_id FROM embed").fetch_optional(conn).await {
-        let message_id = serenity::MessageId::new(embed_id.message_id as u64);
-        let channel_id = serenity::ChannelId::new(embed_id.channel_id as u64);
-        if let Ok(mut msg) = http.get_message(channel_id, message_id).await {
-            if let Ok(builder) = get_deposit_edit_message(conn).await {
-                let _ = msg.edit(http, builder).await;
-            }
-        }
-    };
+    // if let Ok(Some(embed_id)) = sqlx::query!("SELECT message_id,channel_id FROM embed").fetch_optional(conn).await {
+    //     let message_id = serenity::MessageId::new(embed_id.message_id as u64);
+    //     let channel_id = serenity::ChannelId::new(embed_id.channel_id as u64);
+    //     if let Ok(mut msg) = http.get_message(channel_id, message_id).await {
+    //         if let Ok(builder) = get_deposit_edit_message(conn).await {
+    //             let _ = msg.edit(http, builder).await;
+    //         }
+    //     }
+    // };
     HttpResponse::Ok().body(format!("{} deposits were marked as complete", deposits.0.len()))
 }
 
@@ -161,15 +161,15 @@ async fn post_withdraws(data: web::Data<Data>, deposits: web::Json<Vec<Deposit>>
             let _ = user.direct_message(http, CreateMessage::default().content(format!("Your withdraw to website {} for an amount of {} was confirmed", deposit.website_id, deposit.amount))).await;
         }
     }
-    if let Ok(Some(embed_id)) = sqlx::query!("SELECT message_id,channel_id FROM embed").fetch_optional(conn).await {
-        let message_id = serenity::MessageId::new(embed_id.message_id as u64);
-        let channel_id = serenity::ChannelId::new(embed_id.channel_id as u64);
-        if let Ok(mut msg) = http.get_message(channel_id, message_id).await {
-            if let Ok(builder) = get_deposit_edit_message(conn).await {
-                let _ = msg.edit(http, builder).await;
-            }
-        }
-    };
+    // if let Ok(Some(embed_id)) = sqlx::query!("SELECT message_id,channel_id FROM embed").fetch_optional(conn).await {
+    //     let message_id = serenity::MessageId::new(embed_id.message_id as u64);
+    //     let channel_id = serenity::ChannelId::new(embed_id.channel_id as u64);
+    //     if let Ok(mut msg) = http.get_message(channel_id, message_id).await {
+    //         if let Ok(builder) = get_deposit_edit_message(conn).await {
+    //             let _ = msg.edit(http, builder).await;
+    //         }
+    //     }
+    // };
     HttpResponse::Ok().body(format!("{} withdraws were marked as complete", deposits.0.len()))
 }
 

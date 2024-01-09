@@ -74,7 +74,7 @@ pub async fn event_handler(
                     // Log to discord channel
                     dslog::send_log_to_discord(&ctx.http, conn, interaction.guild_id.ok_or("in pm")?, &format!("{} cancelled a deposit on website {}", interaction.user, website_id)).await?;
                     // Update out-of-date withdraw embed
-                    update_latest_embed(conn, &ctx.http).await?;
+                    // update_latest_embed(conn, &ctx.http).await?;
                 } else if custom_id.starts_with("deposit-finish") {
                     if sqlx::query!("UPDATE deposit SET is_check=TRUE WHERE discord_id=$1 AND website_id=$2 ", discord_id, website_id).execute(conn).await?.rows_affected() == 1 {
                         let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
@@ -157,7 +157,7 @@ pub async fn event_handler(
                     // Log to discord channel
                     dslog::send_log_to_discord(&ctx.http, conn, interaction.guild_id.ok_or("in pm")?, &format!("{} cancelled a withdraw on website {}", interaction.user, website_id)).await?;
                     // Update out-of-date withdraw embed
-                    update_latest_embed(conn, &ctx.http).await?;
+                    // update_latest_embed(conn, &ctx.http).await?;
                 } else if custom_id.starts_with("withdraw-finish") {
                     if sqlx::query!("UPDATE withdraw SET is_check=TRUE WHERE discord_id=$1 AND website_id=$2 ", discord_id, website_id).execute(conn).await?.rows_affected() == 1 {
                         let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)

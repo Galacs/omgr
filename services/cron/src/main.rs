@@ -106,15 +106,15 @@ async fn main() -> anyhow::Result<()> {
             let data = serenity::CreateInteractionResponseFollowup::new().ephemeral(true)
                 .content(format!("Your deposit process on website {} was marked as finished after 5 minutes", r.website_id));
             client.http.create_followup_message(&r.interaction_token, &data, vec![]).await?;
-            if let Ok(Some(embed_id)) = sqlx::query!("SELECT message_id,channel_id FROM embed").fetch_optional(&conn).await {
-                let message_id = serenity::MessageId::new(embed_id.message_id as u64);
-                let channel_id = serenity::ChannelId::new(embed_id.channel_id as u64);
-                if let Ok(mut msg) = client.http.get_message(channel_id, message_id).await {
-                    if let Ok(builder) = get_deposit_edit_message(&conn).await {
-                        let _ = msg.edit(&client.http, builder).await;
-                    }
-                }
-            };
+            // if let Ok(Some(embed_id)) = sqlx::query!("SELECT message_id,channel_id FROM embed").fetch_optional(&conn).await {
+            //     let message_id = serenity::MessageId::new(embed_id.message_id as u64);
+            //     let channel_id = serenity::ChannelId::new(embed_id.channel_id as u64);
+            //     if let Ok(mut msg) = client.http.get_message(channel_id, message_id).await {
+            //         if let Ok(builder) = get_deposit_edit_message(&conn).await {
+            //             let _ = msg.edit(&client.http, builder).await;
+            //         }
+            //     }
+            // };
         }
         affected_rows += query.rows_affected();
 
@@ -126,15 +126,15 @@ async fn main() -> anyhow::Result<()> {
             let data = serenity::CreateInteractionResponseFollowup::new().ephemeral(true)
                 .content(format!("Your withdraw process on website {} was marked as finished after 5 minutes", r.website_id));
                 client.http.create_followup_message(&r.interaction_token, &data, vec![]).await?;
-                if let Ok(Some(embed_id)) = sqlx::query!("SELECT message_id,channel_id FROM embed").fetch_optional(&conn).await {
-                    let message_id = serenity::MessageId::new(embed_id.message_id as u64);
-                    let channel_id = serenity::ChannelId::new(embed_id.channel_id as u64);
-                    if let Ok(mut msg) = client.http.get_message(channel_id, message_id).await {
-                        if let Ok(builder) = get_deposit_edit_message(&conn).await {
-                            let _ = msg.edit(&client.http, builder).await;
-                        }
-                    }
-                };
+                // if let Ok(Some(embed_id)) = sqlx::query!("SELECT message_id,channel_id FROM embed").fetch_optional(&conn).await {
+                //     let message_id = serenity::MessageId::new(embed_id.message_id as u64);
+                //     let channel_id = serenity::ChannelId::new(embed_id.channel_id as u64);
+                //     if let Ok(mut msg) = client.http.get_message(channel_id, message_id).await {
+                //         if let Ok(builder) = get_deposit_edit_message(&conn).await {
+                //             let _ = msg.edit(&client.http, builder).await;
+                //         }
+                //     }
+                // };
         }
         affected_rows += query.rows_affected();
 
