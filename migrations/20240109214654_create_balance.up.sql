@@ -1,0 +1,4 @@
+CREATE TABLE balances (
+    discord_id BIGINT PRIMARY KEY NOT NULL UNIQUE,
+    balance BIGINT NOT NULL DEFAULT 0
+)

@@ -102,6 +102,56 @@ async fn get_stock(
     Ok(())
 }
 
+pub async fn create_user_balance(user_id: i64, conn: &Pool<Postgres>) -> Result<(), Error> {
+    sqlx::query!("INSERT INTO balances(discord_id) VALUES ($1)", user_id).execute(conn).await?;
+    Ok(())
+}
+
+// Returns true if user wasn't in the db
+pub async fn exists_or_create_user(user_id: i64, conn: &Pool<Postgres>) -> Result<bool, Error> {
+    let mut bool = false;
+    if sqlx::query!("SELECT * FROM balances WHERE discord_id = $1", user_id).fetch_one(conn).await.is_err() {
+        create_user_balance(user_id, conn).await?;
+        bool = true;
+    };
+    Ok(bool)
+}
+
+/// Displays your or another user's account balance
+#[poise::command(slash_command, prefix_command)]
+async fn balance(
+    ctx: Context<'_>,
+    #[description = "Selected user"] user: Option<serenity::User>,
+) -> Result<(), Error> {
+    let conn = &ctx.data().0;
+    let user_id: i64 = ctx.author().id.into();
+    
+    exists_or_create_user(user_id, conn).await?;
+
+    let balance = sqlx::query!("SELECT balance FROM balances WHERE discord_id=$1", user_id).fetch_one(conn).await?.balance;
+
+    match &user {
+        Some(u) => ctx.say(format!("{} has {}", u, balance)).await?,
+        None => ctx.say(format!("You have {}", balance)).await?,
+    };
+
+    Ok(())
+}
+
+#[poise::command(slash_command, prefix_command, owners_only)]
+async fn add_balance(
+    ctx: Context<'_>,
+    #[description = "Amount"] amount: i64,
+    #[description = "User"] user: Option<serenity::User>,
+) -> Result<(), Error> {
+    let conn = &ctx.data().0;
+    let user = user.unwrap_or(ctx.author().clone());
+    let user_id: i64 = user.id.into();
+    sqlx::query!("UPDATE balances SET balance = balance + $2 WHERE discord_id = $1", user_id, amount).execute(conn).await?;
+    ctx.say(format!("Added {} to <@{}>'s balance", amount, user_id)).await?;
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     // Loads dotenv file
@@ -125,7 +175,7 @@ async fn main() -> Result<(), Error> {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![ping(), set_tax(), set_log(), get_stock(), set_stock(), embeds::create_deposit_embed(), embeds::update_deposit_embed()],
+            commands: vec![ping(), set_tax(), set_log(), get_stock(), set_stock(), balance(), add_balance(), embeds::create_deposit_embed(), embeds::update_deposit_embed()],
             event_handler: |ctx, event, framework, data| {
                 Box::pin(event::event_handler(ctx, event, framework, data))
             },
