@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT website_id, interaction_token FROM deposit WHERE start_date < CURRENT_TIMESTAMP - INTERVAL '5 minutes' AND is_check=false",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "website_id",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "interaction_token",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "572bac5064cba698ab8ed51ec762b984dc311a915374311f462b98e1612547d2"
+}

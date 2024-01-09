@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT DISTINCT website_id FROM deposit",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "website_id",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "0aadf7d8247044dc879bfeb705889ed7953f4a64729e42f7fa9ddf62932a1d66"
+}

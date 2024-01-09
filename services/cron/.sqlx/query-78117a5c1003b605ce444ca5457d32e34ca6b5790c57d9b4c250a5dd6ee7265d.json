@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT website_id, interaction_token FROM deposit WHERE start_date < CURRENT_TIMESTAMP - INTERVAL '5 minutes'",
+  "query": "SELECT website_id, interaction_token FROM withdraw WHERE start_date < CURRENT_TIMESTAMP - INTERVAL '5 minutes' AND is_check=false",
   "describe": {
     "columns": [
       {
@@ -22,5 +22,5 @@
       false
     ]
   },
-  "hash": "0e1b98e3ce82a03cd8bcd213fda254f49d92409ac1f18047d742e6225312e1fe"
+  "hash": "78117a5c1003b605ce444ca5457d32e34ca6b5790c57d9b4c250a5dd6ee7265d"
 }

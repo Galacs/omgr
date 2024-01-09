@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE withdraw SET is_check=TRUE WHERE start_date < CURRENT_TIMESTAMP - INTERVAL '5 minutes' AND is_check=false",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "401d62d054178190aa4c59816f721ce4c23e574e58e1b2407391c9b11a33cba0"
+}

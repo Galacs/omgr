@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * FROM stock",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "website_id",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "stock",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "515889d4f2a4a2b6a4f114806086fa201c790ed78f6c6ecb531899ef74714265"
+}

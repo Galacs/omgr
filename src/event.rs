@@ -109,6 +109,14 @@ pub async fn event_handler(
                     let amount: i32 = response.inputs[0].parse()?;
 
 
+                    let stock = sqlx::query!("SELECT stock FROM stock WHERE website_id=$1", website_id).fetch_one(conn).await?.stock;   
+                    if stock < amount {
+                        let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
+                            .content(format!("This website doesn't have enough stock left, it only has {} left", stock));
+                        let builder = serenity::CreateInteractionResponse::Message(data);
+                        response.interaction.create_response(&ctx.http, builder).await?;
+                        return Ok(())
+                    }
                     let balance = sqlx::query!("SELECT balance FROM balances WHERE discord_id=$1", discord_id).fetch_one(conn).await?.balance;   
                     let tax = sqlx::query!("SELECT rate from tax WHERE tax='withdraw' AND website_id=$1", website_id).fetch_one(conn).await?.rate;
 
