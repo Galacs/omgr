@@ -156,6 +156,7 @@ pub async fn event_handler(
                     let builder = serenity::CreateInteractionResponse::Message(data);
                     response.interaction.create_response(&ctx.http, builder).await?;
                     sqlx::query!("UPDATE balances SET balance = balance - $2 WHERE discord_id = $1", discord_id, r#final as i64).execute(conn).await?;
+                    sqlx::query!("UPDATE stock SET stock = stock - $2 WHERE website_id = $1", website_id, amount as i64).execute(conn).await?;
                     // Log to discord channel
                     dslog::send_log_to_discord(&ctx.http, conn, interaction.guild_id.ok_or("in pm")?, &format!("{} initiated a withdraw on website {} for an amount of {}", interaction.user, website_id, amount)).await?;
                     // Update out-of-date withdraw embed
