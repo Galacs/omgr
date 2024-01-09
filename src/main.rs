@@ -26,11 +26,12 @@ async fn ping(
 #[poise::command(slash_command, prefix_command, owners_only, hide_in_help)]
 async fn set_tax(
     ctx: Context<'_>,
+    #[description = "Website"] website_id: WebsiteId,
     #[description = "Tax in %"] rate: f32,
 ) -> Result<(), Error> {
     let conn = &ctx.data().0;
-    sqlx::query!("UPDATE tax SET rate = $1 WHERE tax='withdraw'", rate).execute(conn).await?;
-    ctx.say(format!("Tax is now set to {}% for withdrawals", rate)).await?;
+    sqlx::query!("UPDATE tax SET rate = $1 WHERE tax='withdraw' AND website_id=$2", rate, website_id.to_string()).execute(conn).await?;
+    ctx.say(format!("Tax is now set to {}% for withdrawals for website {}", rate, website_id)).await?;
     Ok(())
 }
 
