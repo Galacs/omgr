@@ -132,6 +132,8 @@ async fn post_deposits(data: web::Data<Data>, deposits: web::Json<Vec<Deposit>>)
         }
         // Update stocks
         let _ = sqlx::query!("UPDATE stock SET stock = stock + $1 WHERE website_id=$2", deposit.amount, deposit.website_id).execute(conn).await;
+        // Update balances
+        let _ = sqlx::query!("UPDATE balances SET balance = balance + $2 WHERE discord_id = $1", deposit.discord_id, deposit.amount as i64).execute(conn).await;
         if let Ok(user) = serenity::UserId::new(deposit.discord_id as u64).to_user(http).await {
             let _ = user.direct_message(http, CreateMessage::default().content(format!("Your deposit to website {} for an amount of {} was confirmed", deposit.website_id, deposit.amount))).await;
         }
