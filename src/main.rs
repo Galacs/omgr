@@ -55,6 +55,8 @@ enum WebsiteId {
     Website_3,
     Website_4,
     Website_5,
+    Website_6,
+    Website_7,
 }
 
 impl fmt::Display for WebsiteId {
@@ -65,6 +67,8 @@ impl fmt::Display for WebsiteId {
             WebsiteId::Website_3 => write!(f, "3"),
             WebsiteId::Website_4 => write!(f, "4"),
             WebsiteId::Website_5 => write!(f, "5"),
+            WebsiteId::Website_6 => write!(f, "6"),
+            WebsiteId::Website_7 => write!(f, "7"),
         }
     }
 }
@@ -98,6 +102,8 @@ async fn get_stock(
         .field("Website 3", map.get("3").unwrap_or(&0).to_string(), false)
         .field("Website 4", map.get("4").unwrap_or(&0).to_string(), false)
         .field("Website 5", map.get("5").unwrap_or(&0).to_string(), false)
+        .field("Website 6", map.get("6").unwrap_or(&0).to_string(), false)
+        .field("Website 7", map.get("7").unwrap_or(&0).to_string(), false)
     )).await?;
     Ok(())
 }

@@ -99,7 +99,27 @@ pub async fn create_deposit_embed_message(conn: &Pool<Postgres>) -> Result<poise
             .label("Website 5")
             .disabled(get_disabled_withdraw("5"))
             .style(get_style_withdraw("5")),
-    ])];
+    ]),
+    serenity::CreateActionRow::Buttons(vec![
+        serenity::CreateButton::new("deposit-init-6")
+            .label("Website 6")
+            .disabled(get_disabled("6"))
+            .style(get_style("6")),
+        serenity::CreateButton::new("deposit-init-7")
+            .label("Website 7")
+            .disabled(get_disabled("7"))
+            .style(get_style("7")),]),
+    serenity::CreateActionRow::Buttons(vec![
+        serenity::CreateButton::new("withdraw-init-6")
+            .label("Website 6")
+            .disabled(get_disabled_withdraw("6"))
+            .style(get_style_withdraw("6")),
+        serenity::CreateButton::new("withdraw-init-7")
+            .label("Website 7")
+            .disabled(get_disabled_withdraw("7"))
+            .style(get_style_withdraw("7")),
+    ]),
+    ];
 
     Ok(poise::CreateReply::default()
             .content("Deposit process explanation")

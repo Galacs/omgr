@@ -8,3 +8,5 @@ INSERT INTO stock(website_id) VALUES ('2');
 INSERT INTO stock(website_id) VALUES ('3');
 INSERT INTO stock(website_id) VALUES ('4');
 INSERT INTO stock(website_id) VALUES ('5');
+INSERT INTO stock(website_id) VALUES ('6');
+INSERT INTO stock(website_id) VALUES ('7');

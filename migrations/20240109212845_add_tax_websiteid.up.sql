@@ -11,3 +11,5 @@ INSERT INTO tax(tax, rate, website_id) VALUES ('withdraw', 5, '2');
 INSERT INTO tax(tax, rate, website_id) VALUES ('withdraw', 5, '3');
 INSERT INTO tax(tax, rate, website_id) VALUES ('withdraw', 5, '4');
 INSERT INTO tax(tax, rate, website_id) VALUES ('withdraw', 5, '5');
+INSERT INTO tax(tax, rate, website_id) VALUES ('withdraw', 5, '6');
+INSERT INTO tax(tax, rate, website_id) VALUES ('withdraw', 5, '7');
