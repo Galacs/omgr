@@ -1,6 +1,8 @@
-use poise::serenity_prelude as serenity;
+use core::fmt;
 
-use poise::serenity_prelude::UserId;
+use poise::{serenity_prelude as serenity, CreateReply};
+
+use poise::serenity_prelude::{UserId, CreateEmbed};
 use sqlx::{Postgres, Pool, PgPool};
 
 #[derive(Debug)]
@@ -45,6 +47,59 @@ async fn set_log(
     ctx.say(format!("The log channel is now {}", channel)).await?;
     Ok(())
 }
+#[derive(poise::ChoiceParameter)]
+enum WebsiteId {
+    Website_1,
+    Website_2,
+    Website_3,
+    Website_4,
+    Website_5,
+}
+
+impl fmt::Display for WebsiteId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            WebsiteId::Website_1 => write!(f, "1"),
+            WebsiteId::Website_2 => write!(f, "2"),
+            WebsiteId::Website_3 => write!(f, "3"),
+            WebsiteId::Website_4 => write!(f, "4"),
+            WebsiteId::Website_5 => write!(f, "5"),
+        }
+    }
+}
+
+/// Sets the specified's website stock
+#[poise::command(slash_command, prefix_command, owners_only, hide_in_help)]
+async fn set_stock(
+    ctx: Context<'_>,
+    #[description = "Website ID"] website: WebsiteId,
+    #[description = "stock"] stock: i32,
+) -> Result<(), Error> {
+    let conn = &ctx.data().0;
+
+    sqlx::query!("UPDATE stock SET stock = $1 WHERE website_id=$2", stock, website.to_string()).execute(conn).await?;
+    ctx.send(CreateReply::default().ephemeral(true).content(format!("The stock is now set to {} on website {}", stock, website))).await?;
+    Ok(())
+}
+
+/// Get all stocks
+#[poise::command(slash_command, prefix_command, owners_only, hide_in_help)]
+async fn get_stock(
+    ctx: Context<'_>,
+) -> Result<(), Error> {
+    let conn = &ctx.data().0;
+
+    let rows = sqlx::query!("SELECT * FROM stock").fetch_all(conn).await?;
+    let map: std::collections::HashMap<_, _> = rows.iter().map(|x| (x.website_id.clone(), x.stock)).collect();
+    ctx.send(CreateReply::default().embed(CreateEmbed::default().title("Stock")
+        .field("Website 1", map.get("1").unwrap_or(&0).to_string(), false)
+        .field("Website 2", map.get("2").unwrap_or(&0).to_string(), false)
+        .field("Website 3", map.get("3").unwrap_or(&0).to_string(), false)
+        .field("Website 4", map.get("4").unwrap_or(&0).to_string(), false)
+        .field("Website 5", map.get("5").unwrap_or(&0).to_string(), false)
+    )).await?;
+    Ok(())
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -69,7 +124,7 @@ async fn main() -> Result<(), Error> {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![ping(), set_tax(), set_log(), embeds::create_deposit_embed(), embeds::update_deposit_embed()],
+            commands: vec![ping(), set_tax(), set_log(), get_stock(), set_stock(), embeds::create_deposit_embed(), embeds::update_deposit_embed()],
             event_handler: |ctx, event, framework, data| {
                 Box::pin(event::event_handler(ctx, event, framework, data))
             },
