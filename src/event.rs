@@ -108,14 +108,25 @@ pub async fn event_handler(
                     let response = interaction.quick_modal(ctx, modal).await?.unwrap();
                     let amount: i32 = response.inputs[0].parse()?;
 
+
+                    let balance = sqlx::query!("SELECT balance FROM balances WHERE discord_id=$1", discord_id).fetch_one(conn).await?.balance;   
                     let tax = sqlx::query!("SELECT rate from tax WHERE tax='withdraw' AND website_id=$1", website_id).fetch_one(conn).await?.rate;
-                    let r#final = (amount as f32 * (1.0-tax/100.0)).floor() as i32;
+
+                    let r#final = (amount as f32 * (1.0+tax/100.0)).floor() as i32;
+                    if balance < r#final.into() {
+                        let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
+                            .content(format!("You do not have enough balance, you need {}", r#final));
+                        let builder = serenity::CreateInteractionResponse::Message(data);
+                        response.interaction.create_response(&ctx.http, builder).await?;
+                        return Ok(())
+                    }
 
                     if sqlx::query!("INSERT INTO withdraw(website_id, discord_id, interaction_token, amount) VALUES ($1,$2,$3,$4)", website_id, discord_id, &interaction.token, r#final).execute(conn).await.is_err() {
                         let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
                             .content(format!("A withdraw process is already going on website {}", website_id));
                         let builder = serenity::CreateInteractionResponse::Message(data);
-                        interaction.create_response(&ctx.http, builder).await?;
+                        response.interaction.create_response(&ctx.http, builder).await?;
+                        return Ok(())
                     };
                     let reply = {
                         let components = vec![serenity::CreateActionRow::Buttons(vec![
@@ -128,7 +139,7 @@ pub async fn event_handler(
                         ])];
                 
                         poise::CreateReply::default()
-                            .content(format!("Instructions: website {}. Withdraw costs {} and {} will be given at a tax of {}%", website_id, amount, r#final, tax))
+                            .content(format!("Instructions: website {}. Withdraw costs {} and {} will be given at a tax of {}%", website_id, r#final, amount, tax))
                             // .components(components)
                             .ephemeral(true)
                     };
@@ -136,8 +147,9 @@ pub async fn event_handler(
                     data = reply.to_slash_initial_response(data);
                     let builder = serenity::CreateInteractionResponse::Message(data);
                     response.interaction.create_response(&ctx.http, builder).await?;
+                    sqlx::query!("UPDATE balances SET balance = balance - $2 WHERE discord_id = $1", discord_id, r#final as i64).execute(conn).await?;
                     // Log to discord channel
-                    dslog::send_log_to_discord(&ctx.http, conn, interaction.guild_id.ok_or("in pm")?, &format!("{} initiated a withdraw on website {} for an ammount of {}", interaction.user, website_id, amount)).await?;
+                    dslog::send_log_to_discord(&ctx.http, conn, interaction.guild_id.ok_or("in pm")?, &format!("{} initiated a withdraw on website {} for an amount of {}", interaction.user, website_id, amount)).await?;
                     // Update out-of-date withdraw embed
                     // let reply = get_deposit_edit_message(conn).await?;
                     // interaction.message.clone().edit(&ctx.http, reply).await?;
