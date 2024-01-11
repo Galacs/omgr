@@ -17,7 +17,7 @@ struct Deposit {
 async fn get_deposits(data: web::Data<Data>) -> impl Responder {
     let conn = &data.as_ref().0;
     // Get deposit processe with a check status
-    let Ok(rows) = sqlx::query!("SELECT discord_id,website_id FROM deposit WHERE is_check=TRUE").fetch_all(conn).await else {
+    let Ok(rows) = sqlx::query!("SELECT discord_id,website_id FROM deposit WHERE is_check=TRUE ORDER BY start_date ASC LIMIT 1").fetch_all(conn).await else {
         return HttpResponse::InternalServerError().body("DB error")
     };
 
@@ -30,7 +30,7 @@ async fn get_deposits(data: web::Data<Data>) -> impl Responder {
 async fn get_withdraws(data: web::Data<Data>) -> impl Responder {
     let conn = &data.as_ref().0;
     // Get deposit processe with a check status
-    let Ok(rows) = sqlx::query!("SELECT discord_id,website_id,amount FROM withdraw WHERE is_check=TRUE").fetch_all(conn).await else {
+    let Ok(rows) = sqlx::query!("SELECT discord_id,website_id,amount FROM withdraw WHERE is_check=TRUE ORDER BY start_date ASC LIMIT 1").fetch_all(conn).await else {
         return HttpResponse::InternalServerError().body("DB error")
     };
 
