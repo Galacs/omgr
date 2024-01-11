@@ -1,4 +1,4 @@
-use actix_web::{web, App, HttpServer, Responder, get, HttpResponse, post};
+use actix_web::{web, App, HttpServer, Responder, get, HttpResponse, post, HttpRequest};
 use sqlx::{Pool, Postgres, PgPool};
 use serde::{Serialize, Deserialize};
 
@@ -120,24 +120,38 @@ pub async fn get_deposit_edit_message(conn: &Pool<Postgres>) -> Result<EditMessa
 }
 
 #[post("/deposits")]
-async fn post_deposits(data: web::Data<Data>, deposits: web::Json<Vec<Deposit>>) -> impl Responder {
+async fn post_deposits(req: HttpRequest, data: web::Data<Data>) -> impl Responder {
     let conn = &data.as_ref().0;
     let http = &data.as_ref().1;
-    for deposit in &deposits.0 {
-        let Ok(query) = sqlx::query!("DELETE FROM deposit WHERE discord_id=$1 AND website_id=$2 AND is_check=TRUE", deposit.discord_id, deposit.website_id).execute(conn).await else {
-            return HttpResponse::InternalServerError().body("DB error")
-        };
-        if query.rows_affected() < 1 {
-            return HttpResponse::InternalServerError().body(format!("The deposit process: {}, website {} doesn't exist or isn't in check state", deposit.discord_id, deposit.website_id))
-        }
-        // Update stocks
-        let _ = sqlx::query!("UPDATE stock SET stock = stock + $1 WHERE website_id=$2", deposit.amount, deposit.website_id).execute(conn).await;
-        // Update balances
-        let _ = sqlx::query!("UPDATE balances SET balance = balance + $2 WHERE discord_id = $1", deposit.discord_id, deposit.amount as i64).execute(conn).await;
-        if let Ok(user) = serenity::UserId::new(deposit.discord_id as u64).to_user(http).await {
-            let _ = user.direct_message(http, CreateMessage::default().content(format!("Your deposit to website {} for an amount of {} was confirmed", deposit.website_id, deposit.amount))).await;
-        }
+
+    let Some(discord_id) = req.headers().get("discord_id") else {
+        return HttpResponse::BadRequest().body("Error: no discord_id header provided");
+    };
+
+    let Some(amount) = req.headers().get("amount") else {
+        return HttpResponse::BadRequest().body("Error: no amount header provided");
+    };
+
+    let Some(website_id) = req.headers().get("website_id") else {
+        return HttpResponse::BadRequest().body("Error: no website_id header provided");
+    };
+
+    let deposit = Deposit { discord_id: discord_id.to_str().unwrap().parse().unwrap(), amount: amount.to_str().unwrap().parse().unwrap(), website_id: website_id.to_str().unwrap().to_owned() };
+
+    let Ok(query) = sqlx::query!("DELETE FROM deposit WHERE discord_id=$1 AND website_id=$2 AND is_check=TRUE", deposit.discord_id, deposit.website_id).execute(conn).await else {
+        return HttpResponse::InternalServerError().body("DB error")
+    };
+    if query.rows_affected() < 1 {
+        return HttpResponse::InternalServerError().body(format!("The deposit process: {}, website {} doesn't exist or isn't in check state", deposit.discord_id, deposit.website_id))
     }
+    // Update stocks
+    let _ = sqlx::query!("UPDATE stock SET stock = stock + $1 WHERE website_id=$2", deposit.amount, deposit.website_id).execute(conn).await;
+    // Update balances
+    let _ = sqlx::query!("UPDATE balances SET balance = balance + $2 WHERE discord_id = $1", deposit.discord_id, deposit.amount as i64).execute(conn).await;
+    if let Ok(user) = serenity::UserId::new(deposit.discord_id as u64).to_user(http).await {
+        let _ = user.direct_message(http, CreateMessage::default().content(format!("Your deposit to website {} for an amount of {} was confirmed", deposit.website_id, deposit.amount))).await;
+    }
+
     // if let Ok(Some(embed_id)) = sqlx::query!("SELECT message_id,channel_id FROM embed").fetch_optional(conn).await {
     //     let message_id = serenity::MessageId::new(embed_id.message_id as u64);
     //     let channel_id = serenity::ChannelId::new(embed_id.channel_id as u64);
@@ -148,25 +162,38 @@ async fn post_deposits(data: web::Data<Data>, deposits: web::Json<Vec<Deposit>>)
     //     }
     // };
 
-    HttpResponse::Ok().body(format!("{} deposits were marked as complete", deposits.0.len()))
+    HttpResponse::Ok().body("1 deposit was marked as complete")
 }
 
 #[post("/withdraws")]
-async fn post_withdraws(data: web::Data<Data>, deposits: web::Json<Vec<Deposit>>) -> impl Responder {
+async fn post_withdraws(req: HttpRequest, data: web::Data<Data>) -> impl Responder {
     let conn = &data.as_ref().0;
     let http = &data.as_ref().1;
-    for deposit in &deposits.0 {
-        let Ok(query) = sqlx::query!("DELETE FROM withdraw WHERE discord_id=$1 AND website_id=$2 AND is_check=TRUE", deposit.discord_id, deposit.website_id).execute(conn).await else {
-            return HttpResponse::InternalServerError().body("DB error")
-        };
-        if query.rows_affected() < 1 {
-            return HttpResponse::InternalServerError().body(format!("The withdraw process: {}, website {} doesn't exist or isn't in check state", deposit.discord_id, deposit.website_id))
-        }
-        // Update stocks
-        let _ = sqlx::query!("UPDATE stock SET stock = stock - $1 WHERE website_id=$2", deposit.amount, deposit.website_id).execute(conn).await;
-        if let Ok(user) = serenity::UserId::new(deposit.discord_id as u64).to_user(http).await {
-            let _ = user.direct_message(http, CreateMessage::default().content(format!("Your withdraw to website {} for an amount of {} was confirmed", deposit.website_id, deposit.amount))).await;
-        }
+
+    let Some(discord_id) = req.headers().get("discord_id") else {
+        return HttpResponse::BadRequest().body("Error: no discord_id header provided");
+    };
+
+    let Some(amount) = req.headers().get("amount") else {
+        return HttpResponse::BadRequest().body("Error: no amount header provided");
+    };
+
+    let Some(website_id) = req.headers().get("website_id") else {
+        return HttpResponse::BadRequest().body("Error: no website_id header provided");
+    };
+
+    let deposit = Deposit { discord_id: discord_id.to_str().unwrap().parse().unwrap(), amount: amount.to_str().unwrap().parse().unwrap(), website_id: website_id.to_str().unwrap().to_owned() };
+
+    let Ok(query) = sqlx::query!("DELETE FROM withdraw WHERE discord_id=$1 AND website_id=$2 AND is_check=TRUE", deposit.discord_id, deposit.website_id).execute(conn).await else {
+        return HttpResponse::InternalServerError().body("DB error")
+    };
+    if query.rows_affected() < 1 {
+        return HttpResponse::InternalServerError().body(format!("The withdraw process: {}, website {} doesn't exist or isn't in check state", deposit.discord_id, deposit.website_id))
+    }
+    // Update stocks
+    let _ = sqlx::query!("UPDATE stock SET stock = stock - $1 WHERE website_id=$2", deposit.amount, deposit.website_id).execute(conn).await;
+    if let Ok(user) = serenity::UserId::new(deposit.discord_id as u64).to_user(http).await {
+        let _ = user.direct_message(http, CreateMessage::default().content(format!("Your withdraw to website {} for an amount of {} was confirmed", deposit.website_id, deposit.amount))).await;
     }
     // if let Ok(Some(embed_id)) = sqlx::query!("SELECT message_id,channel_id FROM embed").fetch_optional(conn).await {
     //     let message_id = serenity::MessageId::new(embed_id.message_id as u64);
@@ -177,7 +204,7 @@ async fn post_withdraws(data: web::Data<Data>, deposits: web::Json<Vec<Deposit>>
     //         }
     //     }
     // };
-    HttpResponse::Ok().body(format!("{} withdraws were marked as complete", deposits.0.len()))
+    HttpResponse::Ok().body("1 withdraw was marked as complete")
 }
 
 #[actix_web::main]
