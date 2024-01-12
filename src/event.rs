@@ -21,6 +21,25 @@ pub async fn event_handler(
                     return Ok(());
                 };
                 if custom_id.starts_with("deposit-init") {
+                    if let Some(row) = sqlx::query!("SELECT website_id FROM deposit WHERE discord_id=$1", discord_id).fetch_optional(conn).await? {
+                        let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
+                            .content(format!("You already have an ongoing deposit process on website {}", row.website_id));
+                        let builder = serenity::CreateInteractionResponse::Message(data);
+                        interaction.create_response(&ctx.http, builder).await?;
+                    }
+                    // Modal
+                    let modal = serenity::CreateQuickModal::new("Deposit Process")
+                        .timeout(std::time::Duration::from_secs(600))
+                        .short_field("Name");
+                    let response = interaction.quick_modal(ctx, modal).await?.unwrap();
+                    let username = &response.inputs[0];
+                    if sqlx::query!("INSERT INTO deposit(website_id, discord_id, interaction_token, username) VALUES ($1,$2,$3,$4)", website_id, discord_id, &interaction.token, username).execute(conn).await.is_err() {
+                        let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
+                            .content(format!("A deposit process is already going on website {}", website_id));
+                        let builder = serenity::CreateInteractionResponse::Message(data);
+                        interaction.create_response(&ctx.http, builder).await?;
+                    };
+
                     let reply = {
                         let components = vec![serenity::CreateActionRow::Buttons(vec![
                             serenity::CreateButton::new(format!("deposit-cancel-{}", website_id))
@@ -36,22 +55,10 @@ pub async fn event_handler(
                             .components(components)
                             .ephemeral(true)
                     };
-                    if let Some(row) = sqlx::query!("SELECT website_id FROM deposit WHERE discord_id=$1", discord_id).fetch_optional(conn).await? {
-                        let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
-                            .content(format!("You already have an ongoing deposit process on website {}", row.website_id));
-                        let builder = serenity::CreateInteractionResponse::Message(data);
-                        interaction.create_response(&ctx.http, builder).await?;
-                    }
-                    if sqlx::query!("INSERT INTO deposit(website_id, discord_id, interaction_token) VALUES ($1,$2,$3)", website_id, discord_id, &interaction.token).execute(conn).await.is_err() {
-                        let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
-                            .content(format!("A deposit process is already going on website {}", website_id));
-                        let builder = serenity::CreateInteractionResponse::Message(data);
-                        interaction.create_response(&ctx.http, builder).await?;
-                    };
                     let mut data = serenity::CreateInteractionResponseMessage::new();
                     data = reply.to_slash_initial_response(data);
                     let builder = serenity::CreateInteractionResponse::Message(data);
-                    interaction.create_response(&ctx.http, builder).await?;
+                    response.interaction.create_response(&ctx.http, builder).await?;
                     // Log to discord channel
                     dslog::send_log_to_discord(&ctx.http, conn, interaction.guild_id.ok_or("in pm")?, &format!("{} initiated a deposit on website {}", interaction.user, website_id)).await?;
                     // Update out-of-date deposit embed
