@@ -6,7 +6,7 @@ use poise::serenity_prelude::{UserId, CreateEmbed};
 use sqlx::{Postgres, Pool, PgPool};
 
 #[derive(Debug)]
-pub struct Data(Pool<Postgres>);
+pub struct Data(Pool<Postgres>, roboat::Client);
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 pub type Context<'a> = poise::Context<'a, Data, Error>;
 
@@ -168,6 +168,11 @@ async fn main() -> Result<(), Error> {
     let conn = PgPool::connect(&database_url).await?;
     sqlx::migrate!().run(&conn).await?;
 
+    // Roblox API client
+    let client = roboat::ClientBuilder::new()
+        .roblosecurity(std::env::var("ROBLOSECURITY").unwrap_or_default())
+        .build();
+
     let owner_id = {
         let env_var = std::env::var("OWNER_ID");
         if let Ok(str) = env_var {
@@ -196,7 +201,7 @@ async fn main() -> Result<(), Error> {
                 else {
                     poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 }
-                Ok(Data(conn))
+                Ok(Data(conn, client))
             })
         }).build();
 

@@ -12,17 +12,18 @@ struct Deposit {
     amount: i32,
     website_id: String,
     username: Option<String>,
+    roblox_id: Option<i64>,
 }
 
 #[get("/deposits")]
 async fn get_deposits(data: web::Data<Data>) -> impl Responder {
     let conn = &data.as_ref().0;
     // Get deposit processe with a check status
-    let Ok(rows) = sqlx::query!("SELECT discord_id,website_id,username FROM deposit WHERE is_check=TRUE ORDER BY start_date ASC LIMIT 1").fetch_all(conn).await else {
+    let Ok(rows) = sqlx::query!("SELECT discord_id,website_id,username,roblox_id FROM deposit WHERE is_check=TRUE ORDER BY start_date ASC LIMIT 1").fetch_all(conn).await else {
         return HttpResponse::InternalServerError().body("DB error")
     };
 
-    let deposits: Vec<_> = rows.iter().map(|r| Deposit { discord_id: r.discord_id, amount: 0, website_id: r.website_id.clone(), username: Some(r.username.clone()) }).collect();
+    let deposits: Vec<_> = rows.iter().map(|r| Deposit { discord_id: r.discord_id, amount: 0, website_id: r.website_id.clone(), username: Some(r.username.clone()), roblox_id: Some(r.roblox_id) }).collect();
 
     HttpResponse::Ok().json(deposits)
 }
@@ -35,7 +36,7 @@ async fn get_withdraws(data: web::Data<Data>) -> impl Responder {
         return HttpResponse::InternalServerError().body("DB error")
     };
 
-    let deposits: Vec<_> = rows.iter().map(|r| Deposit { discord_id: r.discord_id, amount: r.amount, website_id: r.website_id.clone(), username: None }).collect();
+    let deposits: Vec<_> = rows.iter().map(|r| Deposit { discord_id: r.discord_id, amount: r.amount, website_id: r.website_id.clone(), username: None, roblox_id: None }).collect();
 
     HttpResponse::Ok().json(deposits)
 }
@@ -137,7 +138,7 @@ async fn post_deposits(req: HttpRequest, data: web::Data<Data>) -> impl Responde
         return HttpResponse::BadRequest().body("Error: no website_id header provided");
     };
 
-    let deposit = Deposit { discord_id: discord_id.to_str().unwrap().parse().unwrap(), amount: amount.to_str().unwrap().parse().unwrap(), website_id: website_id.to_str().unwrap().to_owned(), username: None };
+    let deposit = Deposit { discord_id: discord_id.to_str().unwrap().parse().unwrap(), amount: amount.to_str().unwrap().parse().unwrap(), website_id: website_id.to_str().unwrap().to_owned(), username: None, roblox_id: None };
 
     let Ok(query) = sqlx::query!("DELETE FROM deposit WHERE discord_id=$1 AND website_id=$2 AND is_check=TRUE", deposit.discord_id, deposit.website_id).execute(conn).await else {
         return HttpResponse::InternalServerError().body("DB error")
@@ -183,7 +184,7 @@ async fn post_withdraws(req: HttpRequest, data: web::Data<Data>) -> impl Respond
         return HttpResponse::BadRequest().body("Error: no website_id header provided");
     };
 
-    let deposit = Deposit { discord_id: discord_id.to_str().unwrap().parse().unwrap(), amount: amount.to_str().unwrap().parse().unwrap(), website_id: website_id.to_str().unwrap().to_owned(), username: None };
+    let deposit = Deposit { discord_id: discord_id.to_str().unwrap().parse().unwrap(), amount: amount.to_str().unwrap().parse().unwrap(), website_id: website_id.to_str().unwrap().to_owned(), username: None, roblox_id: None };
 
     let Ok(query) = sqlx::query!("DELETE FROM withdraw WHERE discord_id=$1 AND website_id=$2 AND is_check=TRUE", deposit.discord_id, deposit.website_id).execute(conn).await else {
         return HttpResponse::InternalServerError().body("DB error")

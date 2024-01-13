@@ -32,8 +32,27 @@ pub async fn event_handler(
                         .timeout(std::time::Duration::from_secs(600))
                         .short_field("Name");
                     let response = interaction.quick_modal(ctx, modal).await?.unwrap();
+                    let interaction = response.interaction;
                     let username = &response.inputs[0];
-                    if sqlx::query!("INSERT INTO deposit(website_id, discord_id, interaction_token, username) VALUES ($1,$2,$3,$4)", website_id, discord_id, &interaction.token, username).execute(conn).await.is_err() {
+
+                    let client = &data.1;
+                    let users = vec![username.to_owned()];
+                    let Ok(all_username_user_details) = client.username_user_details(users, true).await else {
+                        let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
+                            .content("Can't find your username");
+                        let builder = serenity::CreateInteractionResponse::Message(data);
+                        interaction.create_response(&ctx.http, builder).await?;
+                        return Ok(())
+                    };
+                    let Ok(user) = all_username_user_details.first().ok_or("User not found") else {
+                        let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
+                            .content("Can't find your username");
+                        let builder = serenity::CreateInteractionResponse::Message(data);
+                        interaction.create_response(&ctx.http, builder).await?;
+                        return Ok(())
+                    };
+
+                    if sqlx::query!("INSERT INTO deposit(website_id, discord_id, interaction_token, username, roblox_id) VALUES ($1,$2,$3,$4,$5)", website_id, discord_id, &interaction.token, username, user.id as i64).execute(conn).await.is_err() {
                         let data = serenity::CreateInteractionResponseMessage::new().ephemeral(true)
                             .content(format!("A deposit process is already going on website {}", website_id));
                         let builder = serenity::CreateInteractionResponse::Message(data);
@@ -58,7 +77,7 @@ pub async fn event_handler(
                     let mut data = serenity::CreateInteractionResponseMessage::new();
                     data = reply.to_slash_initial_response(data);
                     let builder = serenity::CreateInteractionResponse::Message(data);
-                    response.interaction.create_response(&ctx.http, builder).await?;
+                    interaction.create_response(&ctx.http, builder).await?;
                     // Log to discord channel
                     dslog::send_log_to_discord(&ctx.http, conn, interaction.guild_id.ok_or("in pm")?, &format!("{} initiated a deposit on website {}", interaction.user, website_id)).await?;
                     // Update out-of-date deposit embed

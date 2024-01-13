@@ -16,6 +16,7 @@ anyhow = "1.0"
 poise = "0.6.1-rc1"
 async-trait = "0.1.75"
 dslog = { path = "libs/dslog"}
+roboat = "0.34.2"
 
 [dependencies]
 sqlx = { workspace = true }
@@ -25,3 +26,4 @@ poise = { workspace = true }
 rand = "0.8.5"
 async-trait = { workspace = true }
 dslog = { workspace = true }
+roboat = { workspace = true }
